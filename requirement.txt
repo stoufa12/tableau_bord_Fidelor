@@ -1,0 +1,14 @@
+
+streamlit
+pymysql
+pandas
+openpyxl
+matplotlib.pyplot
+seaborn
+datetime
+locale
+plotly.express 
+plotly.graph_objects
+altair
+geopy.geocoders
+numpy
