@@ -1,14 +1,10 @@
-
 streamlit
 pymysql
 pandas
 openpyxl
-matplotlib.pyplot
+matplotlib
 seaborn
-datetime
-locale
-plotly.express 
-plotly.graph_objects
+plotly
 altair
-geopy.geocoders
+geopy
 numpy
