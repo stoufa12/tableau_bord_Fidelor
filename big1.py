@@ -228,7 +228,22 @@ if page == "Contrats actifs":
     )
     else:
         st.info("Aucun contrat en retard.")
-        
+
+    df_anomalies = df_retard_filtre[df_retard_filtre["Jours de retard"] > 15]
+
+    if not df_anomalies.empty:
+        lignes = ""
+        for _, row in df_anomalies.iterrows():
+            client = row["Client"]
+            montant = format(row["Montant_pret"], ",.0f").replace(",", " ")
+            lignes += f"<div>- <b>{client}</b> pour le contrat de <b>{montant}</b> FCFA</div>"
+        st.markdown(f"""
+        <div style='background-color:#ffe6e6; padding:10px; border-left:6px solid red;'>
+            <b style='color:red;'>⚠️ Attention :</b> Les clients suivants ont un retard de paiement de <b>plus de 15 jours</b> :<br><br>
+            <span style='color:black;'>{lignes}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
     st.subheader("💎 Estimation des bijoux actifs")    
     db_connection = connect_to_database()
     query = """
@@ -355,11 +370,9 @@ elif page == "Clientèle":
     filtre_type_client = st.radio("Type client", ["Achat réméré", "Achat immédiat"], horizontal=True)
 
     df_map = df_clients_aor if filtre_type_client == "Achat réméré" else df_clients_aoi
-
     df_map['latitude'], df_map['longitude'] = zip(*df_map['address'].apply(geocode_address))
 
     df_map_valid = df_map.dropna(subset=['latitude', 'longitude'])
-
     fig_map = px.scatter_mapbox(df_map_valid, lat='latitude', lon='longitude', size='nombre_clients', color='nombre_clients', color_continuous_scale= 'RdBu', hover_name='address', zoom=10, mapbox_style="open-street-map")
 
     st.plotly_chart(fig_map, use_container_width=True)
@@ -600,6 +613,7 @@ elif page == "Performance globale":
     # Affichage
     st.dataframe(df_final, use_container_width=True, hide_index=True)
 
+    st.markdown("### 📊 Historique des tendances de paiement de l'achat réméré")
     db_connection = connect_to_database()
     query = """
         SELECT 
@@ -1111,12 +1125,13 @@ elif page == "Investisseurs":
        # Affichage
     col1, col2 = st.columns(2)
 
-    montant_formatte = f"{round(montant_dispo_global):,.0f} FCFA"
+    montant_formatte = f"{round(montant_dispo_global):,}".replace(",", " ") + " FCFA"
+    pourcentage_formatte = f"{liquidite_globale:.2f} %"
     with col1:
         display_card("Montant global dispo", montant_formatte, "💰")
 
     with col2:
-        display_card("Liquidité globale en %", round(liquidite_globale, 2), "💰")
+        display_card("Liquidité globale", pourcentage_formatte, "💰")
 
     col1, col2 = st.columns(2)
 
@@ -1462,8 +1477,8 @@ elif page == "Fidelor":
     # Affichage des deux cards côte à côte
     col1, col2 = st.columns(2)
 
-    chiffre_affaire_aor_fcfa = f"{chiffre_affaire_aor:,.0f} FCFA"
-    chiffre_affaire_aoi_fcfa = f"{chiffre_affaire_aoi:,.0f} FCFA"
+    chiffre_affaire_aor_fcfa = f"{round(chiffre_affaire_aor):,}".replace(",", " ") + " FCFA"
+    chiffre_affaire_aoi_fcfa = f"{round(chiffre_affaire_aoi):,}".replace(",", " ") + " FCFA"
     with col1:
         display_card("Plus-values sur AOR", chiffre_affaire_aor_fcfa, "💼")
 
