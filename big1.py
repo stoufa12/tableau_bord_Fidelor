@@ -135,7 +135,7 @@ def get_aoi_data():
 #st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide")
 
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Suivi sur :", ["Contrats actifs", "Clientèle", "Performance globale", "Investisseurs", "Fidelor"])
+page = st.sidebar.radio("Suivi sur :", ["Contrats actifs", "Performance globale", "Investisseurs", "Fidelor", "Clientèle"])
 
 def display_card(title, value, icon):
     st.markdown(f"""
@@ -1317,7 +1317,8 @@ elif page == "Investisseurs":
     with col1:
         selected_year = st.selectbox(
             "Sélectionner l'année", 
-             list(range(2022, now().year + 1))[::-1]  # Créer une liste d'années inversée
+             list(range(2022, now().year + 1))[::-1],
+             key = 'invest_annee'
         )
 
     # Liste des mois en français
@@ -1335,7 +1336,8 @@ elif page == "Investisseurs":
             "Sélectionner le mois",
              options=list(range(1, 13)),  # Options de 1 à 12
              index=current_month - 1,  # Index du mois actuel
-             format_func=lambda x: mois_fr[x - 1]  # Affichage du mois en français
+             format_func=lambda x: mois_fr[x - 1],
+             key = 'invest_mois'
         )
     
     # Charger et filtrer les données en fonction de l'année et du mois sélectionnés
@@ -1460,7 +1462,8 @@ elif page == "Fidelor":
     with col1:
         selected_year = st.selectbox(
            "Sélectionner l'année", 
-            list(range(2022, now().year + 1))[::-1]
+            list(range(2022, now().year + 1))[::-1],
+            key = 'fidelor_annee'
         )
 
     mois_fr = [
@@ -1475,7 +1478,8 @@ elif page == "Fidelor":
             "Sélectionner le mois",
             options=list(range(1, 13)),
             index=current_month - 1,
-            format_func=lambda x: mois_fr[x - 1]
+            format_func=lambda x: mois_fr[x - 1],
+            key = 'fidelor_mois'
         )
 
    
