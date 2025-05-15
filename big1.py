@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 import altair as alt
 from geopy.geocoders import Nominatim
 import numpy as np
+import pytz
+
 
 # Définir la configuration de la page avant toute autre commande Streamlit
 st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide")
@@ -24,6 +26,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 # Connexion à la base de données
 def connect_to_database():
     try:
@@ -37,8 +40,14 @@ def connect_to_database():
         st.error("❌ Impossible de se connecter à la base de données. Vérifiez votre connexion Internet.")
         st.stop()
         
+# Fuseau horaire de Dakar
+timezone = pytz.timezone("Africa/Dakar")
+
+# Fonction centralisée pour avoir l'heure actuelle
+def now():
+    return datetime.datetime.now(timezone)        
 # Mise en cache des résultats de la base de données
-@st.cache_data
+
 #Contrats
 def get_contrats_classification():
     db_connection = connect_to_database()
@@ -56,7 +65,7 @@ def get_contrats_classification():
                                   labels=['Échéance dépassé', 'Échéance dans les 7 jours', 'Échéance compris entre 7 et 15 jours', 'Échéance compris entre 15 et 21 jours', 'Échéance compris entre 21 et 30 jours', 'Échéance dans plus d\'un mois'])
     return df
 
-@st.cache_data
+
 #Client
 def get_clients_by_city(table_name):
     db_connection = connect_to_database()
@@ -69,7 +78,7 @@ def get_clients_by_city(table_name):
     db_connection.close()
     return df
 
-@st.cache_data
+@st.cache_data(ttl = 604800)
 def geocode_address(address, timeout=20):
     geolocator = Nominatim(user_agent="fidelor_app")
     location = geolocator.geocode(f"{address}, Dakar", timeout=timeout)
@@ -388,7 +397,7 @@ elif page == "Performance globale":
     with col1:
         selected_year = st.selectbox(
            "Sélectionner l'année", 
-            list(range(2022, datetime.datetime.now().year + 1))[::-1],
+            list(range(2022, now().year + 1))[::-1],
             key="annee_réméré"
         )
 
@@ -397,7 +406,7 @@ elif page == "Performance globale":
          "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ]
 
-    current_month = datetime.datetime.now().month
+    current_month = now().month
 
     with col2:
         selected_month = st.selectbox(
@@ -507,8 +516,8 @@ elif page == "Performance globale":
     # Localisation en français
       
     # Sélecteur d’année
-    years = list(range(2022, datetime.datetime.now().year + 1))
-    current_year = datetime.datetime.now().year
+    years = list(range(2022, now().year + 1))
+    current_year = now().year
 
     selected_year = st.selectbox(
        "Sélectionner l'année pour le tableau de synthèse",
@@ -675,7 +684,7 @@ elif page == "Performance globale":
     with col1:
         selected_year = st.selectbox(
            "Sélectionner l'année", 
-            list(range(2022, datetime.datetime.now().year + 1))[::-1],
+            list(range(2022, now().year + 1))[::-1],
             key="annee_immédiat"
         )
 
@@ -684,7 +693,7 @@ elif page == "Performance globale":
          "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ]
 
-    current_month = datetime.datetime.now().month
+    current_month = now().month
 
     with col2:
         selected_month = st.selectbox(
@@ -749,8 +758,8 @@ elif page == "Performance globale":
 
     st.markdown("### 📊 Tableau annuel de l'achat immédiat")
     # Sélecteur d’année
-    years = list(range(2022, datetime.datetime.now().year + 1))
-    current_year = datetime.datetime.now().year
+    years = list(range(2022, now().year + 1))
+    current_year = now().year
 
     selected_year = st.selectbox(
        "Sélectionner l'année pour le tableau de synthèse",
@@ -830,8 +839,8 @@ elif page == "Performance globale":
     
     st.markdown("### 📊 Tableau synthèse annuel de l'achat immédiat + réméré")
     # Sélecteur d’année
-    years = list(range(2022, datetime.datetime.now().year + 1))
-    current_year = datetime.datetime.now().year
+    years = list(range(2022, now().year + 1))
+    current_year = now().year
 
     selected_year = st.selectbox(
        "Sélectionner l'année pour le tableau de synthèse",
@@ -1308,7 +1317,7 @@ elif page == "Investisseurs":
     with col1:
         selected_year = st.selectbox(
             "Sélectionner l'année", 
-             list(range(2022, datetime.datetime.now().year + 1))[::-1]  # Créer une liste d'années inversée
+             list(range(2022, now().year + 1))[::-1]  # Créer une liste d'années inversée
         )
 
     # Liste des mois en français
@@ -1318,7 +1327,7 @@ elif page == "Investisseurs":
     ]
 
     # Récupérer le mois actuel
-    current_month = datetime.datetime.now().month
+    current_month = now().month
 
     # Affichage du sélecteur de mois dans col2
     with col2:
@@ -1451,7 +1460,7 @@ elif page == "Fidelor":
     with col1:
         selected_year = st.selectbox(
            "Sélectionner l'année", 
-            list(range(2022, datetime.datetime.now().year + 1))[::-1]
+            list(range(2022, now().year + 1))[::-1]
         )
 
     mois_fr = [
@@ -1459,7 +1468,7 @@ elif page == "Fidelor":
          "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ]
 
-    current_month = datetime.datetime.now().month
+    current_month = now().month
 
     with col2:
         selected_month = st.selectbox(
@@ -1561,8 +1570,8 @@ elif page == "Fidelor":
 
     st.subheader("🧾 Tableau de comptabilité pour Fidelor")
         # Sélecteur d’année
-    years = list(range(2022, datetime.datetime.now().year + 1))
-    current_year = datetime.datetime.now().year
+    years = list(range(2022, now().year + 1))
+    current_year = now().year
 
     selected_year = st.selectbox(
        "Sélectionner l'année pour le tableau de comptabilité",
@@ -1654,8 +1663,8 @@ elif page == "Fidelor":
     db_connection.close()
 
     # Fusion progressive
-    mois_actuel = datetime.datetime.now().month
-    annee_actuelle = datetime.datetime.now().year
+    mois_actuel = now().month
+    annee_actuelle = now().year
     # Si l'année sélectionnée est l'année actuelle, on limite jusqu'au mois en cours
     if selected_year == annee_actuelle:
         df_decaissements = pd.DataFrame({'mois': range(1, mois_actuel + 1)})
