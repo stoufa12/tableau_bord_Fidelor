@@ -13,9 +13,8 @@ import numpy as np
 import pytz
 
 
-# Définir la configuration de la page avant toute autre commande Streamlit
+
 st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide")
-# Changer le fond de la page en blanc
 st.markdown(
     """
     <style>
@@ -27,7 +26,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Connexion à la base de données
 def connect_to_database():
     try:
         return pymysql.connect(
@@ -40,15 +38,10 @@ def connect_to_database():
         st.error("❌ Impossible de se connecter à la base de données. Vérifiez votre connexion Internet.")
         st.stop()
         
-# Fuseau horaire de Dakar
 timezone = pytz.timezone("Africa/Dakar")
-
-# Fonction centralisée pour avoir l'heure actuelle
 def now():
     return datetime.datetime.now(timezone)        
-# Mise en cache des résultats de la base de données
 
-#Contrats
 def get_contrats_classification():
     db_connection = connect_to_database()
     query = """
@@ -66,7 +59,6 @@ def get_contrats_classification():
     return df
 
 
-#Client
 def get_clients_by_city(table_name):
     db_connection = connect_to_database()
     query = f"""
@@ -97,9 +89,7 @@ def get_clients_growth(table_name):
     df = pd.read_sql(query, db_connection)
     db_connection.close()
     return df
-    #
 
-# Fonction pour récupérer les données AOR
 def get_aor_data():
     db_connection = connect_to_database()
     query = f"""
@@ -116,7 +106,6 @@ def get_aor_data():
     df_top_client = df_sorted.head(7)
     return df_top_client 
 
-# Fonction pour récupérer les données AOI
 def get_aoi_data():
     db_connection = connect_to_database()
     query = f"""
@@ -131,8 +120,6 @@ def get_aoi_data():
     df_sorted = df.sort_values(by = 'montant_total', ascending = False)
     df_top_client = df_sorted.head(7)
     return df_top_client
-
-#st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide")
 
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Suivi sur :", ["Contrats actifs", "Performance globale", "Investisseurs", "Fidelor", "Clientèle"])
@@ -165,7 +152,6 @@ if page == "Contrats actifs":
     st.subheader("📊 Répartition du nombre de contrats actifs")
     st.plotly_chart(fig, use_container_width=True)
     
-    # Fonction personnalisée pour le calcul des frais
     def calcul_frais(group):
         if group.name == 'Échéance dépassé':
             return (group["Frais"] + (group["Frais"] * abs(group["Jours_restants"]) * 0.004)).sum()
@@ -178,7 +164,6 @@ if page == "Contrats actifs":
         else:
             return (group["Frais"] + group["Montant_pret"]).sum()
             
-    # Appliquer la fonction à chaque groupe
     
     frais_par_classification = df_contrats.groupby("classification").apply(calcul_frais).reset_index(name="Frais Total")
     total_par_classification = df_contrats.groupby("classification").apply(calcul_total).reset_index(name="Total")
@@ -186,14 +171,12 @@ if page == "Contrats actifs":
     resume = df_contrats.groupby("classification")["Montant_pret"].sum().reset_index() 
     resume.columns = ["Classification selon l\'échéance", "Montant (sans les frais de garde)"]
     
-    # Fusionner les frais
     resume = resume.merge(frais_par_classification, left_on="Classification selon l\'échéance", right_on="classification")
     resume.drop(columns="classification", inplace=True)
 
     resume = resume.merge(total_par_classification, left_on="Classification selon l\'échéance", right_on="classification")
     resume.drop(columns="classification", inplace=True)
     
-    # Optionnel : réorganiser les colonnes
     resume = resume[["Classification selon l\'échéance", "Montant (sans les frais de garde)", "Frais Total", "Total"]]
     valeur_interne = resume["Montant (sans les frais de garde)"].sum()
     st.subheader("📋 Répartition montant à récupérer dans les prochains jours")
@@ -214,7 +197,6 @@ if page == "Contrats actifs":
     with col2:
         display_card("Retard paiement", nombre_contrat_dépassé , "📄")
         
-    # Colonne Jours de retard = valeur absolue de Jours_restants
     df_retard["Jours de retard"] = df_retard["Jours_restants"].abs() 
     # Colonne Pénalités = frais * 0,004 * jours de retard
     df_retard["Pénalités"] = df_retard["Frais"] * 0.004 * df_retard["Jours de retard"]
@@ -277,7 +259,6 @@ if page == "Contrats actifs":
     valeur_interne_fmt = "{:,.0f}".format(valeur_interne).replace(",", " ")
     valeur_marche_fmt = "{:,.0f}".format(valeur_marche).replace(",", " ")
 
-    # Déterminer la couleur et le message
     if difference > 0:
         color = "#28a745"  # vert
         message = f"Sous-évalué de {'{:,.0f}'.format(difference).replace(',', ' ')} FCFA"
@@ -288,7 +269,6 @@ if page == "Contrats actifs":
         color = "#ffc107"  # jaune
         message = "Évaluation équilibrée"
 
-    # Bloc stylisé avec une barre latérale colorée
     st.markdown(f"""
     <div style="
         display: flex;
@@ -336,7 +316,6 @@ elif page == "Clientèle":
     st.subheader("📈 Croissance du nombre de nouveaux clients")
     filtre_type_client = st.radio("Sélectionner le type d'activité", ["Achat réméré", "Achat immédiat"], horizontal=True)
 
-    # Récupérer les données en fonction du type de client sélectionné
     table_name = "client" if filtre_type_client == "Achat réméré" else "client_rachat"
     df_growth = get_clients_growth(table_name)
 
@@ -347,10 +326,8 @@ elif page == "Clientèle":
                  title="Évolution du nombre de nouveaux clients par mois", 
                  labels={'mois': 'Mois', 'nombre_nouveaux_clients': 'Nombre de nouveaux clients'})
 
-    # Personnalisation optionnelle : ajout de labels au-dessus des barres
     fig_bar.update_traces(text=df_growth['nombre_nouveaux_clients'].astype(str), textposition='outside', texttemplate='%{y}')
-    
-    # Afficher le graphique
+
     st.plotly_chart(fig_bar, use_container_width=True)
 
     st.subheader("♻️ Valeur à vie des meilleurs clients")
@@ -359,11 +336,9 @@ elif page == "Clientèle":
          df = get_aor_data()
     elif filtre_type_client == "Achat immédiat":
          df = get_aoi_data()
-    # Vérifier si le dataframe est vide
     if df.empty:
         st.warning("Aucune donnée disponible pour cette sélection.")
     else:
-        # Création de la heatmap
         heatmap_data = df.pivot_table(index='client', columns='nombre_contrats', values='montant_total', fill_value=0)
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.heatmap(heatmap_data, annot=True, fmt=".0f", cmap="coolwarm", linewidths=0.5, ax=ax)
@@ -371,7 +346,6 @@ elif page == "Clientèle":
         ax.set_xlabel("Nombre de Contrats")
         ax.set_ylabel("Nom Client")
 
-    # Affichage du graphique dans Streamlit
     st.pyplot(fig)
     
     st.subheader("🌍 Répartition géographique de nos clients")
@@ -385,13 +359,11 @@ elif page == "Clientèle":
     fig_map = px.scatter_mapbox(df_map_valid, lat='latitude', lon='longitude', size='nombre_clients', color='nombre_clients', color_continuous_scale= 'RdBu', hover_name='address', zoom=10, mapbox_style="open-street-map")
 
     st.plotly_chart(fig_map, use_container_width=True)
-
-# Page 3 : Renouvellements
+    
 elif page == "Performance globale":
     st.title("🔄 Performance globale par type d'achat")
 
     st.subheader("Indicateurs financiers clé pour l'achat réméré")
-    # Sélection du mois et de l'année
     
     col1, col2 = st.columns(2)    
     with col1:
@@ -418,7 +390,6 @@ elif page == "Performance globale":
         )
 
 
-    # Requête SQL
     db_connection = connect_to_database()
     query = """
         SELECT montant_pret AS capital, investissement,  fidelor_frais, renouvellement
@@ -431,9 +402,8 @@ elif page == "Performance globale":
     rows = cursor.fetchall()
     cursor.close()
     db_connection.close()
-    # Création du DataFrame
     df = pd.DataFrame(rows, columns=["capital", "investissement", "fidelor_frais", "renouvellement"])
-    # Calcul des KPI
+
     if not df.empty:
         capital_injecte = df["capital"].sum()
         capital_renouvele = df[df["renouvellement"] != 0]["capital"].sum()
@@ -454,9 +424,7 @@ elif page == "Performance globale":
 
     with col2:
         display_card("Rentabilité de l'investissement (%)", round(taux_rentabilite, 2), "📈")
-        
-    #st.subheader("Nombre de renouvellements")
-    # Requête pour le display_card (mois + année)
+
     db_connection = connect_to_database()
     query_count = """
         SELECT COUNT(*) FROM contract
@@ -480,7 +448,6 @@ elif page == "Performance globale":
     cursor.close()
     db_connection.close()
     
-     # Requête pour le display_card (mois + année)
     db_connection = connect_to_database()
     query_count_2 = """
         SELECT COUNT(*) FROM contract
@@ -494,7 +461,6 @@ elif page == "Performance globale":
     db_connection.close()
 
     nb_renouvel_2 = nb_renouvellements_2 - nb_renouvellements_1
-    # Affichage
     col1, col2 = st.columns(2)
 
     with col1:
@@ -503,7 +469,6 @@ elif page == "Performance globale":
     with col2:
         display_card("Rotation des fonds (%)", round(taux_rotation, 2), "🔄")
     
-    # Affichage
     col1, col2 = st.columns(2)
 
     with col1:
@@ -513,9 +478,7 @@ elif page == "Performance globale":
         display_card("Sorties définitives (liquidations)", nb_renouvel_2, "🔚")
 
     st.markdown("### 📊 Tableau annuel de l'achat réméré")
-    # Localisation en français
       
-    # Sélecteur d’année
     years = list(range(2022, now().year + 1))
     current_year = now().year
 
@@ -525,7 +488,6 @@ elif page == "Performance globale":
         index=years.index(current_year)
     )
 
-    # Requête SQL
     db_connection = connect_to_database()
     query_paye = """
         SELECT 
@@ -544,13 +506,11 @@ elif page == "Performance globale":
     rows_paye = cursor.fetchall()
     cursor.close()
     db_connection.close()
-    # Création DataFrame
     df_paye = pd.DataFrame(rows_paye, columns=[
          "Mois", "Capital Injecté", "Capital Générateur", "Intérêts Générés"
     ])
     
-    
-    # Requête SQL
+
     db_connection = connect_to_database()
     query_non_paye = """
         SELECT 
@@ -569,20 +529,17 @@ elif page == "Performance globale":
     db_connection.close()
     df_non_paye = pd.DataFrame(rows_non_paye, columns=["Mois", "Renouvellements"])
 
-    # Fusionner les deux DataFrames sur le mois
     df = pd.merge(df_paye, df_non_paye, on="Mois", how="left")
     df.fillna(0, inplace=True)
     df_all_aor = df
     cols = ["Capital Injecté", "Capital Générateur", "Intérêts Générés", "Renouvellements"]
     df[cols] = df[cols].apply(pd.to_numeric, errors = 'coerce')
-    
-    # Calcul des taux
+
     df["Taux Rendement Activité"] = (df["Intérêts Générés"] / df["Capital Injecté"]) * 100
     df["Taux Rentabilité Investissement"] = (df["Intérêts Générés"] / df["Capital Générateur"]) * 100
     df["Taux Rotation"] = (df["Capital Générateur"] / df["Capital Injecté"]) * 100
     df = df.round(2)
-    
-    # Ajout des noms de mois en français
+
     mois_fr = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -590,7 +547,6 @@ elif page == "Performance globale":
 
     df["Mois"] = df["Mois"].apply(lambda x: mois_fr[int(x) - 1] if pd.notna(x) else x)
 
-    # Génération des flèches
     def evolution_flèche(colonne):
         flèches = []
         for i in range(len(df)):
@@ -606,20 +562,15 @@ elif page == "Performance globale":
                 else:
                      flèches.append("⬜ =")
         return flèches
-
-    # Appliquer les flèches
     df["Flèche Rendement"] = evolution_flèche("Taux Rendement Activité")
     df["Flèche Rentabilité"] = evolution_flèche("Taux Rentabilité Investissement")
     df["Flèche Rotation"] = evolution_flèche("Taux Rotation")
 
-    # Fusion des colonnes avec flèches
     df["Rendement Activité"] = df["Taux Rendement Activité"].astype(str) + " % " + df["Flèche Rendement"]
     df["Rentabilité Investissement"] = df["Taux Rentabilité Investissement"].astype(str) + " % " + df["Flèche Rentabilité"]
     df["Rotation Fonds"] = df["Taux Rotation"].astype(str) + " % " + df["Flèche Rotation"]
 
-    # Colonnes finales
     df_final = df[["Mois", "Rendement Activité", "Rentabilité Investissement", "Rotation Fonds",  "Renouvellements"]]
-    # Affichage
     st.dataframe(df_final, use_container_width=True, hide_index=True)
 
     st.markdown("### 📊 Historique des tendances de paiement de l'achat réméré")
@@ -638,7 +589,6 @@ elif page == "Performance globale":
     df_type = pd.read_sql(query, db_connection)
     db_connection.close()
     df_type.columns = ['Période', 'Mode paiement', 'Total']
-    # Dictionnaire de renommage
     mapping = {
         'Contrat réglé par anticipation' : 'Anticipé',
         'Contrat réglé à échéance' : 'À échéance',
@@ -647,23 +597,17 @@ elif page == "Performance globale":
         'Contrat en défaut racheté' : 'Défaut racheté'
     }
 
-    # Application au DataFrame
     df_type['Mode paiement'] = df_type['Mode paiement'].replace(mapping)
 
-    #############-----------
-
-    # Formatage de la période
     df_type['Période'] = pd.to_datetime(df_type['Période'], format='%Y-%m')
     df_type['Affichage'] = df_type['Période'].dt.strftime('%b %Y')  # Ex: "Jan 2023"
 
-    # Ordre chronologique
     df_type['Affichage'] = pd.Categorical(
         df_type['Affichage'],
         categories=sorted(df_type['Affichage'].unique(), key=lambda x: pd.to_datetime(x, format='%b %Y')),
         ordered=True
     )
 
-    # Création du graphique
     chart = alt.Chart(df_type).mark_bar().encode(
         x=alt.X('Affichage:N', title='Période', sort=list(df_type['Affichage'].unique())),
         y=alt.Y('Total:Q', title='Nombre de contrats'),
@@ -676,8 +620,6 @@ elif page == "Performance globale":
     )
 
     st.altair_chart(chart, use_container_width=True)
-    
-
     
     st.subheader("Indicateurs financiers clé pour l'achat immédiat") 
     col1, col2 = st.columns(2)    
@@ -704,9 +646,6 @@ elif page == "Performance globale":
             key="mois_immédiat"
         )
 
-   
-
-    # Requête SQL
     db_connection = connect_to_database()
     query_immédiat = """
         SELECT 
@@ -725,10 +664,7 @@ elif page == "Performance globale":
     rows_immédiat = cursor.fetchall()
     cursor.close()
     db_connection.close()
-    # Création du DataFrame
     df_immédiat = pd.DataFrame(rows_immédiat, columns=["capital", "investissement", "fidelor"] )
-
-        # Requête SQL
     db_connection = connect_to_database()
     query_compte = """
         SELECT COUNT(*)
@@ -741,8 +677,6 @@ elif page == "Performance globale":
     nb_achat_immédiat = cursor.fetchone()[0]
     cursor.close()
     db_connection.close()
-    
-    # Calcul des KPI
     if not df_immédiat.empty:
         taux_rentabilite = ((df_immédiat["investissement"] + df_immédiat["fidelor"] ).sum()/ df_immédiat["capital"].sum()) * 100 if df_immédiat["capital"].sum() > 0 else 0  
     
@@ -767,7 +701,7 @@ elif page == "Performance globale":
         index=years.index(current_year),
         key="annee_immédiat_1"
     )
-    # Requête SQL
+
     db_connection = connect_to_database()
     query_immédiat = """
         SELECT 
@@ -785,7 +719,6 @@ elif page == "Performance globale":
     rows_immédiat = cursor.fetchall()
     cursor.close()
     db_connection.close()
-    # Création DataFrame
     df_immédiat = pd.DataFrame(rows_immédiat, columns=[
          "Mois", "capital", "nombre_achat", "interets"
     ])
@@ -798,8 +731,7 @@ elif page == "Performance globale":
     df_immédiat["Taux Rentabilité Investissement"] = (df_immédiat["interets"] / df_immédiat["capital"]) * 100
     df_immédiat["Taux Rotation"] = (df_immédiat["capital"] / df_immédiat["capital"]) * 100
     df_immédiat = df_immédiat.round(2)
-
-    # Ajout des noms de mois en français
+    
     mois_fr = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -807,8 +739,6 @@ elif page == "Performance globale":
 
     df_immédiat["Mois"] = df_immédiat["Mois"].apply(lambda x: mois_fr[int(x) - 1] if pd.notna(x) else x)
 
-
-    # Génération des flèches
     def evolution_flèche(colonne):
         flèches = []
         for i in range(len(df_immédiat)):
@@ -825,20 +755,18 @@ elif page == "Performance globale":
                      flèches.append("⬜ =")
         return flèches
 
-    # Appliquer les flèches
     df_immédiat["Flèche Rentabilité"] = evolution_flèche("Taux Rentabilité Investissement")
     df_immédiat["Flèche Rotation"] = evolution_flèche("Taux Rotation")
     # Fusion des colonnes avec flèches
     df_immédiat["Rentabilité Investissement"] = df_immédiat["Taux Rentabilité Investissement"].astype(str) + " % " + df_immédiat["Flèche Rentabilité"]
     df_immédiat["Rotation Fonds"] = df_immédiat["Taux Rotation"].astype(str) + " % "
 
-    # Colonnes finales
     df_final_immédiat = df_immédiat[["Mois", "Rentabilité Investissement", "Rotation Fonds"]]
     # Affichage
     st.dataframe(df_final_immédiat, use_container_width=True, hide_index=True)
     
     st.markdown("### 📊 Tableau synthèse annuel de l'achat immédiat + réméré")
-    # Sélecteur d’année
+ 
     years = list(range(2022, now().year + 1))
     current_year = now().year
 
@@ -848,7 +776,7 @@ elif page == "Performance globale":
         index=years.index(current_year),
         key="annee_all"
     )
-    # Requête SQL
+
     db_connection = connect_to_database()
     query_all = """
         SELECT 
@@ -893,7 +821,7 @@ elif page == "Performance globale":
 
     df_rentabilite["Rentabilité de l'activité en %"] = (df_rentabilite["Intérêts"] / df_rentabilite["Capital Générateur"]) * 100  
     df_rentabilite = df_rentabilite.round(2)
-    # Ajout des noms de mois en français
+    
     mois_fr = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
@@ -908,13 +836,12 @@ elif page == "Performance globale":
         df_rentabilite.style.format({
             "Capital Générateur": lambda x: f"{x:,.0f}".replace(",", " ") + " FCFA", 
             "Intérêts": lambda x: f"{x:,.0f}".replace(",", " ") + " FCFA",
-            #"Rentabilite de l'activité en %": lambda x: f"{x:,.2f}".replace(",", " ")
+           
         }), 
         use_container_width=True,
         hide_index=True
     )
-   
-    # Création du diagramme circulaire interactif
+
     fig = px.pie(
         df_rentabilite,
         names="Mois",
@@ -923,14 +850,11 @@ elif page == "Performance globale":
         color_discrete_sequence=px.colors.qualitative.Vivid  # Palette personnalisée
     )
 
-    # Affichage dans Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
-# Page 4 : Flux Financiers
 elif page == "Investisseurs":
     st.title("💸 Investissement")
-       
-    # Récupérer les soldes des investisseurs classiques (id_mutualiseur != 1)
+
     db_connection = connect_to_database()
     query_soldes_normaux = """
     SELECT 
@@ -975,8 +899,7 @@ elif page == "Investisseurs":
     """
     df_solde_normaux = pd.read_sql(query_soldes_normaux, db_connection)
     db_connection.close()
-    
-    # Récupérer le solde pour l'investisseur spécial (id_mutualiseur = 1)
+
     db_connection = connect_to_database()
     query_solde_special = """
     SELECT 
@@ -1024,7 +947,6 @@ elif page == "Investisseurs":
     df_solde_special = pd.read_sql(query_solde_special, db_connection)
     db_connection.close()
 
-    # Récupérer les soldes des investisseurs promodor
     db_connection = connect_to_database()
     query_soldes_promodor = """
     SELECT 
@@ -1069,8 +991,7 @@ elif page == "Investisseurs":
     """
     df_solde_promodor = pd.read_sql(query_soldes_promodor, db_connection)
     db_connection.close()
-    
-    # Récupérer les montants en cours (contrats non payés)
+
     db_connection = connect_to_database()
     query_encours_1 = """
     SELECT 
@@ -1082,7 +1003,6 @@ elif page == "Investisseurs":
     """
     df_encours_1 = pd.read_sql(query_encours_1, db_connection)
     db_connection.close()
-    # Récupérer les montants en cours (contrats non payés)
     db_connection = connect_to_database()
     query_encours_2 = """
     SELECT 
@@ -1098,40 +1018,31 @@ elif page == "Investisseurs":
 
     df_encours = pd.concat([df_encours_1[['mutualiseur', 'montant_encours']], 
                        df_encours_2[['mutualiseur', 'montant_encours']]], ignore_index=True)
-    
-    # Fusionner les résultats des soldes et des montants en cours
-    df_solde_normaux['id_mutualiseur'] = df_solde_normaux['id']  # Renommer pour correspondre à df_encours
-    df_solde_special['id_mutualiseur'] = df_solde_special['id']  # Renommer pour correspondre à df_encours
-    df_solde_promodor['id_mutualiseur'] = df_solde_promodor['id']  # Renommer pour correspondre à df_encours
-    
-    # Fusionner les soldes normaux et le solde spécial
+
+    df_solde_normaux['id_mutualiseur'] = df_solde_normaux['id'] 
+    df_solde_special['id_mutualiseur'] = df_solde_special['id']  
+    df_solde_promodor['id_mutualiseur'] = df_solde_promodor['id']  
+
     df_soldes = pd.concat([df_solde_normaux[['id_mutualiseur', 'Investisseur', 'solde']], 
                        df_solde_promodor[['id_mutualiseur', 'Investisseur', 'solde']],
                        df_solde_special[['id_mutualiseur', 'Investisseur', 'solde']]], ignore_index=True)
-    # Fusionner avec les montants en cours
+
     df_complet = df_soldes.merge(df_encours, left_on="id_mutualiseur", right_on="mutualiseur", how="left")
 
-    # Remplir les valeurs manquantes pour les montants en cours
     df_complet["montant_encours"] = df_complet["montant_encours"].fillna(0)
 
-    # Calculer le montant disponible
     df_complet["Montant dispo"] = df_complet["solde"] - df_complet["montant_encours"]
-    
-    # Calculer le taux de liquidité
+
     df_complet["Taux_liquidite"] = (df_complet["Montant dispo"] / df_complet["solde"]) * 100
     df_complet["Taux_liquidite"] = df_complet["Taux_liquidite"].round(2)
 
-    # Calcul du taux de liquidité global
     liquidite_globale = ((df_complet["Montant dispo"].sum() / df_complet["solde"].sum()) * 100)
     montant_dispo_global = (df_complet["Montant dispo"].sum())
 
-    # Tableau 1 : Taux de liquidité par investisseur
     df_taux_liquidite = df_complet[["Investisseur", "Taux_liquidite"]].sort_values(by="Taux_liquidite", ascending=False)
 
-    # Tableau 2 : Montant disponible par investisseur
     df_montants_dispo = df_complet[["Investisseur", "Montant dispo"]].sort_values(by="Montant dispo", ascending=False)
 
-       # Affichage
     col1, col2 = st.columns(2)
 
     montant_formatte = f"{round(montant_dispo_global):,}".replace(",", " ") + " FCFA"
@@ -1155,8 +1066,7 @@ elif page == "Investisseurs":
     with col2:
         st.subheader("Liquidité en % par investisseur")
         st.dataframe(df_taux_liquidite, use_container_width=True, hide_index=True)  
-
-    # Supposons que df_dispo est ton DataFrame avec une colonne "montant_disponible"
+        
     df_anomalies = df_montants_dispo[df_montants_dispo["Montant dispo"] < 0]
 
     if not df_anomalies.empty:
@@ -1169,8 +1079,6 @@ elif page == "Investisseurs":
         """, unsafe_allow_html=True)
     
     st.subheader("Flux financiers liés à l'investissement")
-    # Charger les encaissements
-    # Supposons que tu as une fonction pour charger les données
     def get_flux_data(selected_year, selected_month):
             db_connection = connect_to_database()
             encaissement_query = """
@@ -1272,7 +1180,6 @@ elif page == "Investisseurs":
             df_decaissement = pd.read_sql(decaissement_query, db_connection)
             db_connection.close()
 
-            #Regrouper les composantes par jour
             df_encaissement = df_encaissement.groupby("jour").sum().reset_index()
             df_encaissement["encaissement_total"] = (
                 df_encaissement["montant_pret"]
@@ -1288,7 +1195,7 @@ elif page == "Investisseurs":
                 + df_decaissement["prix_achat"]
                 + df_decaissement["retrait_argent"]
             )
-            #Fusionner les deux DataFrames par date
+
             df_flux = pd.merge(df_encaissement[["jour", "encaissement_total"]], 
                                df_decaissement[["jour", "decaissement_total"]], on="jour",         
                                how="outer").fillna(0)
@@ -1298,22 +1205,16 @@ elif page == "Investisseurs":
             df_flux["trésorerie_nette"] = df_flux["encaissement_total"] - df_flux["decaissement_total"]
             df_flux["trésorerie_cumulée"] = df_flux["trésorerie_nette"].cumsum()
 
-
-
-            # On filtre le DataFrame pour l'année et le mois sélectionnés
             df_flux_filtered = df_flux[
                 (df_flux['jour'].dt.year == selected_year) &
                 (df_flux['jour'].dt.month == selected_month)
             ]
-    
-            # Calculer flux_net et profit_cumulé sur les données filtrées
+
             df_flux_filtered['trésorerie_nette'] = df_flux_filtered['encaissement_total'] - df_flux_filtered['decaissement_total']
             df_flux_filtered['trésorerie_cumulée'] = df_flux_filtered['trésorerie_nette'].cumsum()
 
             return df_flux_filtered
-    # Création des colonnes pour sélectionner l'année et le mois
     col1, col2 = st.columns(2)
-    # Affichage du sélecteur d'année dans col1
     with col1:
         selected_year = st.selectbox(
             "Sélectionner l'année", 
@@ -1321,33 +1222,27 @@ elif page == "Investisseurs":
              key = 'invest_annee'
         )
 
-    # Liste des mois en français
     mois_fr = [
         "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
         "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ]
 
-    # Récupérer le mois actuel
     current_month = now().month
 
-    # Affichage du sélecteur de mois dans col2
     with col2:
         selected_month = st.selectbox(
             "Sélectionner le mois",
-             options=list(range(1, 13)),  # Options de 1 à 12
-             index=current_month - 1,  # Index du mois actuel
+             options=list(range(1, 13)),  
+             index=current_month - 1,  
              format_func=lambda x: mois_fr[x - 1],
              key = 'invest_mois'
         )
-    
-    # Charger et filtrer les données en fonction de l'année et du mois sélectionnés
+
     df_flux_filtered = get_flux_data(selected_year, selected_month)
-    # Formater les colonnes si tu veux
     df_flux_filtered["encaissement_total"] = df_flux_filtered["encaissement_total"].round(0).astype(int)
     df_flux_filtered["decaissement_total"] = df_flux_filtered["decaissement_total"].round(0).astype(int)
     df_flux_filtered["trésorerie_nette"] = df_flux_filtered["trésorerie_nette"].round(0).astype(int)
     df_flux_filtered["trésorerie_cumulée"] = df_flux_filtered["trésorerie_cumulée"].round(0).astype(int)
-    # Affichage du tableau mis à jour avec profit cumulé
     df_affichage = df_flux_filtered[['jour', 'encaissement_total', 'decaissement_total', 'trésorerie_nette', 'trésorerie_cumulée']]
     df_affichage.columns = ['Jour', 'Encaissement', 'Décaissement', 'Trésorerie Nette', 'Trésorerie Cumulée']
     st.dataframe(
@@ -1369,22 +1264,21 @@ elif page == "Investisseurs":
         y=alt.Y("Montant:Q", title="Montant (FCFA)"),
         color=alt.Color("Type:N", title="Type de flux", scale=alt.Scale(domain=["trésorerie_nette", "trésorerie_cumulée"], range=["#2ecc71", "#e74c3c"]))
     )
-    # Ligne seuil à y = 0
+
     seuil = alt.Chart(pd.DataFrame({'y': [0]})).mark_rule(
-        strokeDash=[5,5],  # pointillés
+        strokeDash=[5,5],  
         color='red'
     ).encode(
         y='y:Q'
     ).properties(
         title="Évolution des flux sur le mois sélectionné"
     )
-    # Superposer les deux
+
     chart = alt.layer(line_chart, seuil).properties(
         width="container",
         height=400
     ).interactive()
-    
-     # Dernière valeur de la trésorerie cumulée
+
     if not df_flux_filtré.empty:
         dernier_jour = df_flux_filtré["jour"].max()
         ligne_derniere_jour = df_flux_filtré.loc[df_flux_filtré["jour"] == dernier_jour]
@@ -1392,11 +1286,9 @@ elif page == "Investisseurs":
         if not ligne_derniere_jour.empty:
             dernier_valeur = ligne_derniere_jour["trésorerie_cumulée"].values[0]
 
-            # Déterminer couleur et icône
             couleur = "red" if dernier_valeur > 0 else "green"
             icone = "⚠️" if dernier_valeur > 0 else "✅"
 
-            # Affichage côte à côte
             col1, col2 = st.columns([6, 1])
             with col1:
                 st.altair_chart(chart, use_container_width=True)
@@ -1427,7 +1319,7 @@ elif page == "Investisseurs":
             st.warning("⚠️ Aucune donnée de trésorerie disponible pour le dernier jour.")
     else: 
         st.warning("⚠️ Aucune donnée disponible pour le mois sélectionné.")
-# Page 4 : Flux Financiers
+
 elif page == "Fidelor":
     st.title("💸 Fidelor")
 
@@ -1482,12 +1374,9 @@ elif page == "Fidelor":
             key = 'fidelor_mois'
         )
 
-   
-    # Récupération des chiffres d'affaires
     chiffre_affaire_aor = get_chiffre_affaire_aor(selected_month, selected_year)
     chiffre_affaire_aoi = get_chiffre_affaire_aoi(selected_month, selected_year)
 
-    # Affichage des deux cards côte à côte
     col1, col2 = st.columns(2)
 
     chiffre_affaire_aor_fcfa = f"{round(chiffre_affaire_aor):,}".replace(",", " ") + " FCFA"
@@ -1498,34 +1387,28 @@ elif page == "Fidelor":
     with col2:
         display_card("Plus-values sur AOI", chiffre_affaire_aoi_fcfa, "💍")
 
-    # Création des données
+
     data_pie = pd.DataFrame({
         "Activité": ["Achat réméré", "Achat immédiat"],
         "Plus-values": [chiffre_affaire_aor, chiffre_affaire_aoi]
     })
 
-    # Création du diagramme circulaire
     fig_pie = px.pie(
         data_pie,
         names="Activité",
         values="Plus-values",
         color="Activité",
-        color_discrete_map={"Achat réméré": "#ADD8E6", "Achat immédiat": "#8A2BE2"},  # Or et violet
-        hole=0.4  # Pour un effet de donut 
+        color_discrete_map={"Achat réméré": "#ADD8E6", "Achat immédiat": "#8A2BE2"},  
+        hole=0.4 
     )
 
     fig_pie.update_traces(textinfo='percent+label')
 
-   
-    # Chiffre d'affaires total
     chiffre_affaire_total = chiffre_affaire_aor + chiffre_affaire_aoi
 
-    # Seuil fixé manuellement
-    seuil = 8000000  # à adapter selon ton cas
-    # Calcul du pourcentage du seuil atteint
+    seuil = 8000000  
     pourcentage = (chiffre_affaire_total / seuil) * 100 if seuil > 0 else 0
 
-    # Détermination du label
     if pourcentage < 50:
         statut = "Seuil critique"
         couleur_zone = "red"
@@ -1535,15 +1418,15 @@ elif page == "Fidelor":
     else:
         statut = "Objectif atteint"
         couleur_zone = "green"
-    # Création de la jauge
+
     fig_gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=chiffre_affaire_total,
-        number={'font': {'size': 40}},  # ← Ici on réduit juste la taille du nombre
+        number={'font': {'size': 40}}, 
         delta={"reference": seuil, "increasing": {"color": "green"}, "decreasing": {"color": "red"}},
         gauge={
             'axis': {'range': [0, seuil * 1.5],
-                     'tickformat': ',.0f'    # ← Format pour afficher 10 000 000 et non 10 mois
+                     'tickformat': ',.0f'    
             },
             'bar': {'color': couleur_zone},
             'steps': [
@@ -1559,10 +1442,7 @@ elif page == "Fidelor":
          },
          title={'text': f"<b>{statut}</b>"}
     ))
-  #  st.plotly_chart(fig_gauge, use_container_width=True)
-    
 
-    # Affichage
     col1, col2 = st.columns(2)
 
     with col1:
@@ -1573,7 +1453,6 @@ elif page == "Fidelor":
 
 
     st.subheader("🧾 Tableau de comptabilité pour Fidelor")
-        # Sélecteur d’année
     years = list(range(2022, now().year + 1))
     current_year = now().year
 
@@ -1584,7 +1463,6 @@ elif page == "Fidelor":
     )
 
 
-    # Encaissements AOR
     db_connection = connect_to_database()
     query_aor = """
     SELECT MONTH(date_paye) AS mois, SUM(fidelor_frais) AS ca_aor, SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 THEN montant_pret ELSE 0 END) AS ca_aor_2
@@ -1595,7 +1473,6 @@ elif page == "Fidelor":
     df_aor = pd.read_sql(query_aor, db_connection, params=(selected_year,))
     db_connection.close()
 
-    # Encaissements AOI
     db_connection = connect_to_database()
     query_aoi = """
     SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 THEN prix_achat ELSE 0 END) as ca_aoi_2
@@ -1605,13 +1482,11 @@ elif page == "Fidelor":
     """
     df_aoi = pd.read_sql(query_aoi, db_connection, params=(selected_year,))
     db_connection.close()
-  
-    # Fusion
+
     df_encaissements = pd.merge(df_aor, df_aoi, on="mois", how="outer").fillna(0)
     dataset_1 = df_encaissements
     df_encaissements["Encaissements"] = df_encaissements["ca_aor"] + df_encaissements["ca_aor_2"] + df_encaissements["ca_aoi"] + df_encaissements["ca_aoi_2"]
 
-    # TVA AOR
     db_connection = connect_to_database()
     query_tva_aor = """
     SELECT MONTH(date_paye) AS mois, SUM(fidelor_frais) * 0.09 AS tva_aor
@@ -1622,7 +1497,6 @@ elif page == "Fidelor":
     df_tva_aor = pd.read_sql(query_tva_aor, db_connection, params=(selected_year,))
     db_connection.close()
 
-    # TVA AOI
     db_connection = connect_to_database()
     query_tva_aoi = """
     SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) * 0.09 AS tva_aoi
@@ -1633,7 +1507,6 @@ elif page == "Fidelor":
     df_tva_aoi = pd.read_sql(query_tva_aoi, db_connection, params=(selected_year,))
     db_connection.close()
 
-    # Prêts Fidelor (mutualiseur = 0)
     db_connection = connect_to_database()
     query_prets = """
     SELECT MONTH(reg_date) AS mois, SUM(montant_pret) AS prets
@@ -1643,8 +1516,6 @@ elif page == "Fidelor":
     """
     df_prets = pd.read_sql(query_prets, db_connection, params=(selected_year,))
     db_connection.close()
-
-    # Achats bijoux Fidelor (mutualiseur = 0)
     db_connection = connect_to_database()
     query_achats = """
     SELECT MONTH(reg_date) AS mois, SUM(prix_achat) AS achats
@@ -1655,7 +1526,6 @@ elif page == "Fidelor":
     df_achats = pd.read_sql(query_achats, db_connection, params=(selected_year,))
     db_connection.close()
 
-    # Investissements ajustés
     db_connection = connect_to_database()
     query_invest = """
     SELECT MONTH(date_paye) AS mois, SUM(investissement) AS investissements
@@ -1665,11 +1535,8 @@ elif page == "Fidelor":
     """
     df_invest = pd.read_sql(query_invest, db_connection, params=(selected_year,))
     db_connection.close()
-
-    # Fusion progressive
     mois_actuel = now().month
     annee_actuelle = now().year
-    # Si l'année sélectionnée est l'année actuelle, on limite jusqu'au mois en cours
     if selected_year == annee_actuelle:
         df_decaissements = pd.DataFrame({'mois': range(1, mois_actuel + 1)})
     else:
@@ -1682,18 +1549,13 @@ elif page == "Fidelor":
     df_decaissements = df_decaissements.merge(df_invest, on="mois", how="left")
 
     df_decaissements.fillna(0, inplace=True)
-    # Charger les charges
     df_charges = pd.read_excel("charges.xlsx")
-
-    # Filtrer par année sélectionnée
     df_charges = df_charges[df_charges["année"] == selected_year]
-    # Convertir les mois en chiffres
     mois_map = {
         "janvier": 1, "février": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
         "juillet": 7, "août": 8, "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12
     }
     df_charges["mois_num"] = df_charges["mois"].str.lower().map(mois_map)
-    # Calcul total des charges fixes
     df_charges["charges_totales"] = (
         df_charges["salaires"] +
         df_charges["électricité"] +
@@ -1701,15 +1563,12 @@ elif page == "Fidelor":
         df_charges["matériels"] +
         df_charges["autres"]
     )
-    # Associer chaque mois à ses charges
     charges_par_mois = df_charges.set_index("mois_num")["charges_totales"].to_dict()
     
 
     df_decaissements["charges_salaire"] = df_decaissements["mois"].map(charges_par_mois)
     df_decaissements["charges_salaire"].fillna(0, inplace=True)
     dataset_2 = df_decaissements
-                                              
-    # Total des décaissements
     df_decaissements["Décaissements"] = (
         df_decaissements["tva_aor"] +
         df_decaissements["tva_aoi"] +
@@ -1718,17 +1577,12 @@ elif page == "Fidelor":
         df_decaissements["investissements"] +
         df_decaissements["charges_salaire"]
     )
- 
-    # Fusionner les DataFrames pour avoir à la fois les encaissements et les décaissements
-    df_final = pd.merge(df_encaissements, df_decaissements, on="mois", how="outer")
-    df_final.fillna(0, inplace=True)  # Remplir les valeurs manquantes par 0
-    df_final["Mois"] = df_final["mois"].apply(lambda x: mois_fr[x - 1])
-    
-    # Calculer la balance : Encaissements - Décaissements
-    df_final["Bénéfice net"] = df_final["Encaissements"] - df_final["Décaissements"]
 
-    # Déterminer si c'est un excédent ou un déficit 
-    
+    df_final = pd.merge(df_encaissements, df_decaissements, on="mois", how="outer")
+    df_final.fillna(0, inplace=True) 
+    df_final["Mois"] = df_final["mois"].apply(lambda x: mois_fr[x - 1])
+
+    df_final["Bénéfice net"] = df_final["Encaissements"] - df_final["Décaissements"]
 
     def type_balance(row):
         if row["Bénéfice net"] > 0:
@@ -1737,11 +1591,8 @@ elif page == "Fidelor":
             return "➖ Équilibré"
         else:
             return "❌ Déficit"
-    # Appliquer
     df_final["Balance"] = df_final.apply(type_balance, axis=1)
 
-    # Affichage clair avec Streamlit
-    # Affichage clair avec Streamlit
     df_final = df_final.sort_values("mois")[["Mois", "Encaissements", "Décaissements", "Bénéfice net", "Balance"]].reset_index(drop=True)
     
     st.dataframe(
