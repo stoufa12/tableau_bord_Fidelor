@@ -199,7 +199,7 @@ if page == "Contrats actifs":
         
     df_retard["Jours de retard"] = df_retard["Jours_restants"].abs() 
     # Colonne Pénalités = frais * 0,004 * jours de retard
-    df_retard["Pénalités"] = df_retard["Frais"] * 0.004 * df_retard["Jours de retard"]
+    df_retard["Pénalités"] = df_retard["Montant_pret"] * 0.004 * df_retard["Jours de retard"]
     df_retard = df_retard[['Client', 'Téléphone', 'Montant_pret', 'Frais', 'Pénalités', 'Date_fin', 'Jours de retard']]
     
     if not df_retard.empty:
@@ -685,7 +685,7 @@ elif page == "Performance globale":
     col1, col2 = st.columns(2)
 
     with col1:
-        display_card("Rentabilité de l'investissement (%)", round(taux_rentabilite, 2), "💰")
+        display_card("Rentabilité de l'activité (%)", round(taux_rentabilite, 2), "💰")
 
     with col2:
         display_card("Nombre achat immédiat", nb_achat_immédiat, "📈")
