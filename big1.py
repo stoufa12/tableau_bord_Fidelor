@@ -451,16 +451,15 @@ elif page == "Performance globale":
     db_connection = connect_to_database()
     query_count_2 = """
         SELECT COUNT(*) FROM contract
-        WHERE MONTH(date_paye) = %s AND YEAR(date_paye) = %s AND ajustement <> 1
+        WHERE MONTH(date_paye) = %s AND YEAR(date_paye) = %s AND ajustement <> 1 AND solde = 0
        
     """
     cursor = db_connection.cursor()
     cursor.execute(query_count_2, (selected_month, selected_year))
-    nb_renouvellements_2 = cursor.fetchone()[0]
+    nb_renouvel_2 = cursor.fetchone()[0]
     cursor.close()
     db_connection.close()
-
-    nb_renouvel_2 = nb_renouvellements_2 - nb_renouvellements_1
+ 
     col1, col2 = st.columns(2)
 
     with col1:
