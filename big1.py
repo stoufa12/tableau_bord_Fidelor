@@ -14,7 +14,7 @@ import pytz
 
 
 
-st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide")
+st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide", initial_sidebar_state="expanded")
 st.markdown(
     """
     <style>
