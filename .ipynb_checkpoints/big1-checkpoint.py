@@ -19,7 +19,7 @@ st.markdown(
     """
     <style>
         body {
-            background-color: #FFFFFF; 
+            background-color: #FFFFFF;  # Changer la couleur de fond
         }
     </style>
     """,
