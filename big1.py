@@ -19,7 +19,7 @@ st.markdown(
     """
     <style>
         body {
-            background-color: #FFFFFF; 
+            background-color: #FFFFFF;  # Changer la couleur de fond
         }
     </style>
     """,
@@ -867,7 +867,7 @@ elif page == "Investisseurs":
     FROM mutualiseur m
 
     LEFT JOIN (
-        SELECT mutualiseur, SUM(CASE WHEN ajustement <> 1 THEN investissement ELSE 0 END) AS total_achat_remere
+        SELECT mutualiseur, SUM(investissement) AS total_achat_remere
         FROM contract
         GROUP BY mutualiseur
     ) c ON c.mutualiseur = m.id
@@ -913,7 +913,7 @@ elif page == "Investisseurs":
 
     LEFT JOIN (
         SELECT mutualiseur, 
-       SUM(CASE WHEN ajustement <> 1 THEN investissement ELSE 0 END) AS total_achat_remere
+       SUM(investissement) AS total_achat_remere
        FROM contract
        WHERE date_paye > '2025-03-13'
        GROUP BY mutualiseur
@@ -959,7 +959,7 @@ elif page == "Investisseurs":
     FROM promotteur m
 
     LEFT JOIN (
-        SELECT promotteur, SUM(CASE WHEN ajustement <> 1 THEN investissement ELSE 0 END) AS total_achat_remere
+        SELECT promotteur, SUM(investissement) AS total_achat_remere
         FROM contract
         GROUP BY promotteur
     ) c ON c.promotteur = m.id
