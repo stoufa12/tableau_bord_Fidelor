@@ -12,6 +12,26 @@ from geopy.geocoders import Nominatim
 import numpy as np
 import pytz
 
+ # --- FONCTION DE LOGIN ---
+def check_login():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+
+    if not st.session_state.logged_in:
+        st.title("🔒 Connexion sécurisée")
+        username = st.text_input("admin")
+        password = st.text_input("Mot de passe", type="password")
+        if st.button("Se connecter"):
+            if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
+                st.session_state.logged_in = True
+                st.success("Connexion réussie ✅")
+                st.experimental_rerun()
+            else:
+                st.error("❌ Identifiants incorrects")
+        st.stop()  # Empêche le reste du code de s'exécuter si non connecté
+
+# --- APPEL DU LOGIN AVANT TOUT ---
+check_login() 
 
 
 st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide", initial_sidebar_state="expanded")
