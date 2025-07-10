@@ -12,12 +12,12 @@ from geopy.geocoders import Nominatim
 import numpy as np
 import pytz
 
-# --- REDÉCLENCHE LE RERUN SI BESOIN ---
+
 if "rerun" in st.session_state and st.session_state.rerun:
-    st.session_state.rerun = False  # reset pour éviter boucle infinie
+    st.session_state.rerun = False  
     st.experimental_rerun()
 
-# --- FONCTION DE LOGIN ---
+
 def check_login():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
@@ -29,13 +29,12 @@ def check_login():
         if st.button("Se connecter"):
             if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
                 st.session_state.logged_in = True
-                st.session_state.rerun = True  # ➤ on déclenche un rerun juste après
+                st.session_state.rerun = True  
                 st.stop()
             else:
                 st.error("❌ Identifiants incorrects")
         st.stop()
 
-# --- APPEL DU LOGIN ---
 check_login()
 
 
