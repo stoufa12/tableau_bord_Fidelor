@@ -25,7 +25,7 @@ def check_login():
             if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
                 st.session_state.logged_in = True
                 st.success("Connexion réussie ✅")
-                st.experimental_rerun()
+                st.session_state["rerun"] = True
             else:
                 st.error("❌ Identifiants incorrects")
         st.stop()  # Empêche le reste du code de s'exécuter si non connecté
