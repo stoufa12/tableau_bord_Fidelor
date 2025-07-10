@@ -12,7 +12,7 @@ from geopy.geocoders import Nominatim
 import numpy as np
 import pytz
 
- # --- FONCTION DE LOGIN ---
+
 def check_login():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
@@ -28,9 +28,9 @@ def check_login():
                 st.session_state["rerun"] = True
             else:
                 st.error("❌ Identifiants incorrects")
-        st.stop()  # Empêche le reste du code de s'exécuter si non connecté
+        st.stop()  
 
-# --- APPEL DU LOGIN AVANT TOUT ---
+
 check_login() 
 
 
