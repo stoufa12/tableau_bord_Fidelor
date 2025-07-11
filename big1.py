@@ -13,25 +13,32 @@ import numpy as np
 import pytz
 
 
+if st.session_state.get("logged_in") and st.session_state.get("rerun"):
+    st.session_state.rerun = False
+    st.experimental_rerun()
+
 def check_login():
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
+    if st.session_state.get("logged_in"):
+        return
 
-    if not st.session_state.logged_in:
-        st.title("🔒 Connexion sécurisée")
-        username = st.text_input("admin")
+    st.title("🔒 Connexion sécurisée")
+
+    with st.form("login_form"):
+        username = st.text_input("Nom d'utilisateur")
         password = st.text_input("Mot de passe", type="password")
-        if st.button("Se connecter"):
-            if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
-                st.session_state.logged_in = True
-                st.success("Connexion réussie ✅")
-                st.session_state["rerun"] = True
-            else:
-                st.error("❌ Identifiants incorrects")
-        st.stop()  
+        submitted = st.form_submit_button("Se connecter")
 
+    if submitted:
+        if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
+            st.session_state.logged_in = True
+            st.session_state.rerun = True 
+            st.experimental_rerun()        
+        else:
+            st.error("❌ Identifiants incorrects")
 
-check_login() 
+    st.stop()
+
+check_login()
 
 
 st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide", initial_sidebar_state="expanded")
@@ -1494,7 +1501,7 @@ elif page == "Fidelor":
 
     db_connection = connect_to_database()
     query_aoi = """
-    SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 THEN prix_achat ELSE 0 END) as ca_aoi_2
+    SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 AND prix_valoriser <> 0 THEN prix_achat ELSE 0 END) as ca_aoi_2
     FROM bijou_achat
     WHERE YEAR(reg_date) = %s
     GROUP BY mois
