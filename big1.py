@@ -15,7 +15,8 @@ import pytz
 
 if st.session_state.get("logged_in") and st.session_state.get("rerun"):
     st.session_state.rerun = False
-    st.experimental_rerun()
+    st.rerun()
+
 
 def check_login():
     if st.session_state.get("logged_in"):
@@ -31,14 +32,15 @@ def check_login():
     if submitted:
         if username == st.secrets["auth"]["username"] and password == st.secrets["auth"]["password"]:
             st.session_state.logged_in = True
-            st.session_state.rerun = True 
-            st.experimental_rerun()        
-        else:
+            st.session_state.rerun = True
+            st.rerun()  
             st.error("❌ Identifiants incorrects")
 
     st.stop()
 
+
 check_login()
+
 
 
 st.set_page_config(page_title="Tableau de Bord - Fidelor", layout="wide", initial_sidebar_state="expanded")
