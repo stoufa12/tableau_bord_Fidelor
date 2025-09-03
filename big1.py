@@ -1367,7 +1367,7 @@ elif page == "Fidelor":
     def get_chiffre_affaire_aoi(month, year):
         db_connection = connect_to_database()
         query = """
-        SELECT SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS chiffre_affaire_aoi
+        SELECT SUM(fidelor) AS chiffre_affaire_aoi
         FROM bijou_achat
         WHERE MONTH(reg_date) = %s AND YEAR(reg_date) = %s
         """
@@ -1503,7 +1503,7 @@ elif page == "Fidelor":
 
     db_connection = connect_to_database()
     query_aoi = """
-    SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 AND prix_valoriser <> 0 THEN prix_achat ELSE 0 END) as ca_aoi_2
+    SELECT MONTH(reg_date) AS mois, SUM(fidelor) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 prix_achat) as ca_aoi_2
     FROM bijou_achat
     WHERE YEAR(reg_date) = %s
     GROUP BY mois
@@ -1527,7 +1527,7 @@ elif page == "Fidelor":
 
     db_connection = connect_to_database()
     query_tva_aoi = """
-    SELECT MONTH(reg_date) AS mois, SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) * 0.09 AS tva_aoi
+    SELECT MONTH(reg_date) AS mois, SUM(fidelor) * 0.09 AS tva_aoi
     FROM bijou_achat
     WHERE YEAR(reg_date) = %s
     GROUP BY mois
