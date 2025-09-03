@@ -678,11 +678,7 @@ elif page == "Performance globale":
     query_immédiat = """
         SELECT 
           prix_achat AS capital, 
-          investissement,  
-          CASE 
-            WHEN prix_valoriser <> 0 THEN fidelor 
-            ELSE 0 
-          END AS fidelor
+          investissement, fidelor
         FROM bijou_achat
         WHERE MONTH(reg_date) = %s AND YEAR(reg_date) = %s;
     """
@@ -736,7 +732,7 @@ elif page == "Performance globale":
             MONTH(reg_date) AS mois,
             SUM(prix_achat) AS capital,
             COUNT(*) AS nombre_achat,
-            SUM(investissement) + SUM(CASE WHEN prix_valoriser <> 0 THEN fidelor ELSE 0 END) AS interets
+            SUM(investissement) + SUM(fidelor) AS interets
         FROM bijou_achat
         WHERE YEAR(reg_date) = %s
         GROUP BY mois
@@ -815,11 +811,7 @@ elif page == "Performance globale":
         SELECT 
             MONTH(reg_date) AS mois,
             prix_achat AS capital,
-            investissement + 
-            CASE 
-              WHEN prix_valoriser <> 0 THEN fidelor 
-              ELSE 0 
-            END AS interet
+            investissement + fidelor AS interet
         FROM bijou_achat
         WHERE YEAR(reg_date) = %s
 
