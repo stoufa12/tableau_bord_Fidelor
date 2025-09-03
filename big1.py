@@ -1503,7 +1503,7 @@ elif page == "Fidelor":
 
     db_connection = connect_to_database()
     query_aoi = """
-    SELECT MONTH(reg_date) AS mois, SUM(fidelor) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 prix_achat) as ca_aoi_2
+    SELECT MONTH(reg_date) AS mois, SUM(fidelor) AS ca_aoi,  SUM(CASE WHEN mutualiseur = 0 AND promotteur = 0 THEN prix_achat ELSE 0 END) as ca_aoi_2
     FROM bijou_achat
     WHERE YEAR(reg_date) = %s
     GROUP BY mois
